@@ -1,0 +1,44 @@
+<!-- boards/templates/boards/board_detail.html -->
+<!-- Representa la vista visual estilo Trello cargando las columnas (lists) 
+e ítems (tasks) asociados usando relaciones inversas de ORM -->
+{% extends 'boards/base.html' %}
+
+{% block title %}{{ board.title }} | Gestor de Tareas{% endblock title %}
+
+{% block content %}
+<div style="margin-bottom: 1.5rem;">
+    <h2>{{ board.title }}</h2>
+    <p style="color: #5e6c84;">{{ board.description }}</p>
+</div>
+
+<div class="columns-container">
+    <!-- Recorremos las listas asociadas al tablero mediante related_name="lists" -->
+    {% for list in board.lists.all %}
+        <div class="column">
+            <h4 style="margin-top: 0; color: #172b4d;">{{ list.title }}</h4>
+            
+            <!-- Recorremos las tareas asociadas a la columna mediante related_name="tasks" -->
+            {% for task in list.tasks.all %}
+                <div class="task-card priority-{{ task.priority }}">
+                    <strong style="display: block; color: #172b4d;">{{ task.title }}</strong>
+                    {% if task.description %}
+                        <p style="font-size: 0.85rem; color: #5e6c84; margin: 0.4rem 0;">{{ task.description }}</p>
+                    {% endif %}
+                    <div style="font-size: 0.75rem; color: #8993a4; margin-top: 0.4rem;">
+                        {% if task.assigned_to %}
+                            👤 {{ task.assigned_to.username }}
+                        {% endif %}
+                        {% if task.due_date %}
+                            📅 {{ task.due_date|date:"d/m" }}
+                        {% endif %}
+                    </div>
+                </div>
+            {% empty %}
+                <p style="font-size: 0.85rem; color: #8993a4;">Sin tareas en esta columna</p>
+            {% endfor %}
+        </div>
+    {% empty %}
+        <p>Este tablero no tiene columnas configuradas. Puedes agregarlas desde el panel de administración.</p>
+    {% endfor %}
+</div>
+{% endblock content %}

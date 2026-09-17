@@ -1,0 +1,18 @@
+<!-- boards/templates/boards/board_form.html -->
+{% extends 'boards/base.html' %}
+
+{% block title %}Nuevo Tablero | Gestor de Tareas{% endblock title %}
+
+{% block content %}
+<div class="card" style="max-width: 500px; margin: 0 auto;">
+    <h2>Crear Nuevo Tablero</h2>
+    <form method="post">
+        {% csrf_token %}
+        <div style="margin-bottom: 1rem;">
+            {{ form.as_p }}
+        </div>
+        <button type="submit" class="btn">Guardar Tablero</button>
+        <a href="{% url 'boards:board_list' %}" style="margin-left: 1rem; color: #5e6c84; text-decoration: none;">Cancelar</a>
+    </form>
+</div>
+{% endblock content %}

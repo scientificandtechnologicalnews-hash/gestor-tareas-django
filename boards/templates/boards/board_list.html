@@ -1,0 +1,23 @@
+<!-- boards/templates/boards/board_list.html -->
+{% extends 'boards/base.html' %}
+
+{% block title %}Mis Tableros | Gestor de Tareas{% endblock title %}
+
+{% block content %}
+<div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem;">
+    <h2>Mis Tableros</h2>
+    <a href="{% url 'boards:board_create' %}" class="btn">+ Nuevo Tablero</a>
+</div>
+
+<div class="board-grid">
+    {% for board in boards %}
+        <div class="card">
+            <h3><a href="{% url 'boards:board_detail' board.pk %}" style="color: #172b4d; text-decoration: none;">{{ board.title }}</a></h3>
+            <p style="color: #5e6c84; font-size: 0.9rem;">{{ board.description|default:"Sin descripción" }}</p>
+            <small style="color: #8993a4;">Creado: {{ board.created_at|date:"d/m/Y" }}</small>
+        </div>
+    {% empty %}
+        <p>No tienes ningún tablero creado todavía. ¡Crea el primero!</p>
+    {% endfor %}
+</div>
+{% endblock content %}
