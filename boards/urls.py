@@ -20,4 +20,7 @@ urlpatterns = [
     path('list/<int:list_pk>/task/add/', views.TaskCreateView.as_view(), name='task_create'),
     path('task/<int:pk>/edit/', views.TaskUpdateView.as_view(), name='task_update'),
     path('task/<int:pk>/delete/', views.TaskDeleteView.as_view(), name='task_delete'),
+
+    # Ruta AJAX para mover tareas mediante Drag & Drop
+    path('task/move/', views.task_move_view, name='task_move'),
 ]

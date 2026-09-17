@@ -8,47 +8,49 @@
         <h2 style="margin:0;">{{ board.title }}</h2>
         <p style="color: #5e6c84; margin: 0.2rem 0 0 0;">{{ board.description|default:"Sin descripción" }}</p>
     </div>
-    <!-- Botón para añadir nueva columna/lista -->
     <a href="{% url 'boards:list_create' board.pk %}" class="btn">+ Nueva Columna</a>
 </div>
 
 <div class="columns-container">
     {% for list in board.lists.all %}
-        <div class="column">
+        <!-- Añadimos data-list-id a la columna para identificarla en JS -->
+        <div class="column" data-list-id="{{ list.pk }}">
             <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.8rem;">
                 <h4 style="margin: 0; color: #172b4d;">{{ list.title }}</h4>
-                <!-- Opciones de Columna: Editar / Eliminar -->
                 <div style="font-size: 0.8rem;">
                     <a href="{% url 'boards:list_update' list.pk %}" style="color: #0079bf; text-decoration: none; margin-right: 0.3rem;">✏️</a>
                     <a href="{% url 'boards:list_delete' list.pk %}" style="color: #eb5a46; text-decoration: none;">🗑️</a>
                 </div>
             </div>
             
-            <!-- Tareas dentro de la columna -->
-            {% for task in list.tasks.all %}
-                <div class="task-card priority-{{ task.priority }}">
-                    <div style="display: flex; justify-content: space-between; align-items: flex-start;">
-                        <strong style="color: #172b4d;">{{ task.title }}</strong>
-                        <div style="font-size: 0.75rem; min-width: 30px; text-align: right;">
-                            <a href="{% url 'boards:task_update' task.pk %}" style="text-decoration: none; color: #5e6c84;">✏️</a>
-                            <a href="{% url 'boards:task_delete' task.pk %}" style="text-decoration: none; color: #eb5a46;">🗑️</a>
+            <!-- Contenedor de tareas droppable -->
+            <div class="task-list-container" style="min-height: 50px;">
+                {% for task in list.tasks.all %}
+                    <!-- Habilitamos draggable y asociamos data-task-id -->
+                    <div class="task-card priority-{{ task.priority }}" 
+                         draggable="true" 
+                         data-task-id="{{ task.pk }}"
+                         style="cursor: grab;">
+                        <div style="display: flex; justify-content: space-between; align-items: flex-start;">
+                            <strong style="color: #172b4d;">{{ task.title }}</strong>
+                            <div style="font-size: 0.75rem; min-width: 30px; text-align: right;">
+                                <a href="{% url 'boards:task_update' task.pk %}" style="text-decoration: none; color: #5e6c84;">✏️</a>
+                                <a href="{% url 'boards:task_delete' task.pk %}" style="text-decoration: none; color: #eb5a46;">🗑️</a>
+                            </div>
+                        </div>
+                        
+                        {% if task.description %}
+                            <p style="font-size: 0.85rem; color: #5e6c84; margin: 0.4rem 0;">{{ task.description }}</p>
+                        {% endif %}
+                        
+                        <div style="font-size: 0.75rem; color: #8993a4; margin-top: 0.4rem; display: flex; justify-content: space-between;">
+                            <span>{% if task.assigned_to %}👤 {{ task.assigned_to.username }}{% else %}Sin asignar{% endif %}</span>
+                            <span>{% if task.due_date %}📅 {{ task.due_date|date:"d/m/Y" }}{% endif %}</span>
                         </div>
                     </div>
-                    
-                    {% if task.description %}
-                        <p style="font-size: 0.85rem; color: #5e6c84; margin: 0.4rem 0;">{{ task.description }}</p>
-                    {% endif %}
-                    
-                    <div style="font-size: 0.75rem; color: #8993a4; margin-top: 0.4rem; display: flex; justify-content: space-between;">
-                        <span>{% if task.assigned_to %}👤 {{ task.assigned_to.username }}{% else %}Sin asignar{% endif %}</span>
-                        <span>{% if task.due_date %}📅 {{ task.due_date|date:"d/m/Y" }}{% endif %}</span>
-                    </div>
-                </div>
-            {% empty %}
-                <p style="font-size: 0.85rem; color: #8993a4; text-align: center;">Sin tareas</p>
-            {% endfor %}
+                {% endfor %}
+            </div>
 
-            <!-- Botón para añadir tarea a esta columna específica -->
             <a href="{% url 'boards:task_create' list.pk %}" style="display: block; text-align: center; background: #ffffff80; padding: 0.4rem; border-radius: 3px; color: #5e6c84; text-decoration: none; font-size: 0.85rem; margin-top: 0.5rem;">
                 + Añadir Tarea
             </a>
@@ -57,4 +59,86 @@
         <p>Este tablero no tiene columnas todavía. Haz clic en <strong>"+ Nueva Columna"</strong> para empezar.</p>
     {% endfor %}
 </div>
+
+<!-- Scripts en Vanilla JavaScript para gestionar el Drag & Drop -->
+<script>
+    document.addEventListener('DOMContentLoaded', () => {
+        // Función auxiliar para obtener la cookie CSRF requerida por Django
+        function getCookie(name) {
+            let cookieValue = null;
+            if (document.cookie && document.cookie !== '') {
+                const cookies = document.cookie.split(';');
+                for (let i = 0; i < cookies.length; i++) {
+                    const cookie = cookies[i].trim();
+                    if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                        cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                        break;
+                    }
+                }
+            }
+            return cookieValue;
+        }
+
+        const csrftoken = getCookie('csrftoken');
+        let draggedTaskCard = null;
+
+        // 1. Escuchar eventos de inicio y fin de arrastre en las tarjetas
+        document.querySelectorAll('.task-card').forEach(card => {
+            card.addEventListener('dragstart', (e) => {
+                draggedTaskCard = card;
+                card.style.opacity = '0.5';
+                e.dataTransfer.setData('text/plain', card.dataset.taskId);
+            });
+
+            card.addEventListener('dragend', () => {
+                card.style.opacity = '1';
+                draggedTaskCard = null;
+            });
+        });
+
+        // 2. Escuchar eventos de sobrevuelo y soltado en las columnas
+        document.querySelectorAll('.column').forEach(column => {
+            column.addEventListener('dragover', (e) => {
+                e.preventDefault(); // Permitir el soltado (drop)
+            });
+
+            column.addEventListener('drop', (e) => {
+                e.preventDefault();
+                const taskId = e.dataTransfer.getData('text/plain');
+                const targetListId = column.dataset.listId;
+                const taskContainer = column.querySelector('.task-list-container');
+
+                if (draggedTaskCard && taskContainer) {
+                    // Mover la tarjeta visualmente en el DOM inmediatamente
+                    taskContainer.appendChild(draggedTaskCard);
+
+                    // Petición asíncrona a Django para actualizar la base de datos
+                    fetch("{% url 'boards:task_move' %}", {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'X-CSRFToken': csrftoken // Encabezado de seguridad CSRF
+                        },
+                        body: JSON.stringify({
+                            'task_id': taskId,
+                            'target_list_id': targetListId
+                        })
+                    })
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.status !== 'ok') {
+                            alert('Error al mover la tarea: ' + data.message);
+                            location.reload(); // Recargar si hubo un fallo
+                        }
+                    })
+                    .catch(error => {
+                        console.error('Error:', error);
+                        alert('Error de conexión al guardar el movimiento.');
+                    });
+                }
+            });
+        });
+    });
+</script>
 {% endblock content %}
+

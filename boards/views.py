@@ -1,3 +1,7 @@
+import json
+from django.http import JsonResponse
+from django.views.decorators.http import require_POST
+from django.contrib.auth.decorators import login_required
 from django.shortcuts import get_object_or_404
 from django.contrib.auth.forms import UserCreationForm
 from django.views.generic import ListView, DetailView, CreateView, UpdateView, DeleteView
@@ -152,4 +156,35 @@ class TaskDeleteView(LoginRequiredMixin, DeleteView):
 
     def get_success_url(self):
         return reverse_lazy('boards:board_detail', kwargs={'pk': self.object.task_list.board.pk})
+
+@login_required
+@require_POST
+def task_move_view(request):
+    """
+    Vista de API/AJAX para actualizar la columna (TaskList) de una Tarea (Task)
+    al arrastrar y soltar.
+    """
+    try:
+        # Decodificamos el cuerpo JSON de la petición entrante
+        data = json.loads(request.body)
+        task_id = data.get('task_id')
+        target_list_id = data.get('target_list_id')
+
+        # Obtenemos la tarea asegurando que pertenezca al usuario logueado por seguridad
+        task = Task.objects.get(pk=task_id, task_list__board__owner=request.user)
+        
+        # Obtenemos la columna destino del mismo usuario
+        target_list = TaskList.objects.get(pk=target_list_id, board__owner=request.user)
+
+        # Actualizamos la relación en la base de datos
+        task.task_list = target_list
+        task.save()
+
+        # Devolvemos una respuesta JSON de éxito
+        return JsonResponse({'status': 'ok', 'message': 'Tarea movida exitosamente'})
+
+    except (Task.DoesNotExist, TaskList.DoesNotExist):
+        return JsonResponse({'status': 'error', 'message': 'Tarea o lista no encontrada'}, status=404)
+    except Exception as e:
+        return JsonResponse({'status': 'error', 'message': str(e)}, status=400)
 # Create your views here.
