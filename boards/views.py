@@ -1,3 +1,4 @@
+from django.contrib.auth.forms import UserCreationForm
 from django.views.generic import ListView, DetailView, CreateView
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.urls import reverse_lazy
@@ -39,4 +40,12 @@ class BoardCreateView(LoginRequiredMixin, CreateView):
         form.instance.owner = self.request.user
         return super().form_valid(form)
 
+class SignUpView(CreateView):
+    """
+    Vista encargada del registro de nuevos usuarios en la plataforma.
+    Usa el formulario por defecto de Django que gestiona nombre de usuario y contraseña con validaciones.
+    """
+    form_class = UserCreationForm
+    success_url = reverse_lazy('login')  # Redirige al login tras crear la cuenta con éxito
+    template_name = 'registration/register.html'
 # Create your views here.

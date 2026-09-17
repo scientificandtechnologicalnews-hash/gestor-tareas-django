@@ -1,0 +1,20 @@
+<!-- boards/templates/registration/login.html -->
+{% extends 'boards/base.html' %}
+
+{% block title %}Iniciar Sesión | Gestor de Tareas{% endblock title %}
+
+{% block content %}
+<div class="card" style="max-width: 400px; margin: 2rem auto;">
+    <h2>Iniciar Sesión</h2>
+    
+    <form method="post">
+        {% csrf_token %}
+        {{ form.as_p }}
+        <button type="submit" class="btn" style="width: 100%;">Entrar</button>
+    </form>
+    
+    <p style="margin-top: 1.5rem; font-size: 0.9rem; text-align: center;">
+        ¿No tienes una cuenta? <a href="{% url 'register' %}">Regístrate aquí</a>
+    </p>
+</div>
+{% endblock content %}

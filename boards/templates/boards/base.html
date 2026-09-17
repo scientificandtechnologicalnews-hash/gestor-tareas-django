@@ -29,10 +29,15 @@
         <h1><a href="{% url 'boards:board_list' %}" style="margin:0;">📋 Gestor de Tareas</a></h1>
         <nav>
             {% if user.is_authenticated %}
-                <span>Hola, <strong>{{ user.username }}</strong></span>
-                <a href="{% url 'admin:logout' %}">Cerrar Sesión</a>
+                <span style="margin-right: 1rem;">Hola, <strong>{{ user.username }}</strong></span>
+                <!-- Formulario POST para cerrar sesión de manera segura -->
+                <form action="{% url 'logout' %}" method="post" style="display: inline;">
+                    {% csrf_token %}
+                    <button type="submit" style="background: none; border: none; color: white; cursor: pointer; font-weight: bold; text-decoration: underline;">Cerrar Sesión</button>
+                </form>
             {% else %}
-                <a href="{% url 'admin:login' %}">Iniciar Sesión</a>
+                <a href="{% url 'login' %}">Iniciar Sesión</a>
+                <a href="{% url 'register' %}">Registrarse</a>
             {% endif %}
         </nav>
     </header>

@@ -16,10 +16,19 @@ Including another URLconf
 """
 from django.contrib import admin
 from django.urls import path, include
+from boards.views import SignUpView  # Importamos la vista de registro
+
 
 
 urlpatterns = [
     path('admin/', admin.site.urls),
+
+    # Rutas automáticas de autenticación de Django (login, logout, cambio de clave, etc.)
+    path('accounts/', include('django.contrib.auth.urls')),
+
+    # Ruta para registrar nuevos usuarios
+    path('accounts/register/', SignUpView.as_view(), name='register'),
     # Redirige la ruta raíz a las URLs de la app boards
+    # Rutas principales del gestor de tareas
     path('', include('boards.urls', namespace='boards')),
 ]
