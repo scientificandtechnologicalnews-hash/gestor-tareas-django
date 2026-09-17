@@ -1,0 +1,15 @@
+{% extends 'boards/base.html' %}
+
+{% block title %}Tarea | Gestor de Tareas{% endblock title %}
+
+{% block content %}
+<div class="card" style="max-width: 550px; margin: 0 auto;">
+    <h2>{% if object %}Editar Tarea{% else %}Nueva Tarea{% endif %}</h2>
+    <form method="post">
+        {% csrf_token %}
+        {{ form.as_p }}
+        <button type="submit" class="btn">Guardar Tarea</button>
+        <a href="javascript:history.back()" style="margin-left: 1rem; color: #5e6c84; text-decoration: none;">Cancelar</a>
+    </form>
+</div>
+{% endblock content %}

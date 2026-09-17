@@ -1,44 +1,60 @@
-<!-- boards/templates/boards/board_detail.html -->
-<!-- Representa la vista visual estilo Trello cargando las columnas (lists) 
-e ítems (tasks) asociados usando relaciones inversas de ORM -->
 {% extends 'boards/base.html' %}
 
 {% block title %}{{ board.title }} | Gestor de Tareas{% endblock title %}
 
 {% block content %}
-<div style="margin-bottom: 1.5rem;">
-    <h2>{{ board.title }}</h2>
-    <p style="color: #5e6c84;">{{ board.description }}</p>
+<div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem;">
+    <div>
+        <h2 style="margin:0;">{{ board.title }}</h2>
+        <p style="color: #5e6c84; margin: 0.2rem 0 0 0;">{{ board.description|default:"Sin descripción" }}</p>
+    </div>
+    <!-- Botón para añadir nueva columna/lista -->
+    <a href="{% url 'boards:list_create' board.pk %}" class="btn">+ Nueva Columna</a>
 </div>
 
 <div class="columns-container">
-    <!-- Recorremos las listas asociadas al tablero mediante related_name="lists" -->
     {% for list in board.lists.all %}
         <div class="column">
-            <h4 style="margin-top: 0; color: #172b4d;">{{ list.title }}</h4>
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.8rem;">
+                <h4 style="margin: 0; color: #172b4d;">{{ list.title }}</h4>
+                <!-- Opciones de Columna: Editar / Eliminar -->
+                <div style="font-size: 0.8rem;">
+                    <a href="{% url 'boards:list_update' list.pk %}" style="color: #0079bf; text-decoration: none; margin-right: 0.3rem;">✏️</a>
+                    <a href="{% url 'boards:list_delete' list.pk %}" style="color: #eb5a46; text-decoration: none;">🗑️</a>
+                </div>
+            </div>
             
-            <!-- Recorremos las tareas asociadas a la columna mediante related_name="tasks" -->
+            <!-- Tareas dentro de la columna -->
             {% for task in list.tasks.all %}
                 <div class="task-card priority-{{ task.priority }}">
-                    <strong style="display: block; color: #172b4d;">{{ task.title }}</strong>
+                    <div style="display: flex; justify-content: space-between; align-items: flex-start;">
+                        <strong style="color: #172b4d;">{{ task.title }}</strong>
+                        <div style="font-size: 0.75rem; min-width: 30px; text-align: right;">
+                            <a href="{% url 'boards:task_update' task.pk %}" style="text-decoration: none; color: #5e6c84;">✏️</a>
+                            <a href="{% url 'boards:task_delete' task.pk %}" style="text-decoration: none; color: #eb5a46;">🗑️</a>
+                        </div>
+                    </div>
+                    
                     {% if task.description %}
                         <p style="font-size: 0.85rem; color: #5e6c84; margin: 0.4rem 0;">{{ task.description }}</p>
                     {% endif %}
-                    <div style="font-size: 0.75rem; color: #8993a4; margin-top: 0.4rem;">
-                        {% if task.assigned_to %}
-                            👤 {{ task.assigned_to.username }}
-                        {% endif %}
-                        {% if task.due_date %}
-                            📅 {{ task.due_date|date:"d/m" }}
-                        {% endif %}
+                    
+                    <div style="font-size: 0.75rem; color: #8993a4; margin-top: 0.4rem; display: flex; justify-content: space-between;">
+                        <span>{% if task.assigned_to %}👤 {{ task.assigned_to.username }}{% else %}Sin asignar{% endif %}</span>
+                        <span>{% if task.due_date %}📅 {{ task.due_date|date:"d/m/Y" }}{% endif %}</span>
                     </div>
                 </div>
             {% empty %}
-                <p style="font-size: 0.85rem; color: #8993a4;">Sin tareas en esta columna</p>
+                <p style="font-size: 0.85rem; color: #8993a4; text-align: center;">Sin tareas</p>
             {% endfor %}
+
+            <!-- Botón para añadir tarea a esta columna específica -->
+            <a href="{% url 'boards:task_create' list.pk %}" style="display: block; text-align: center; background: #ffffff80; padding: 0.4rem; border-radius: 3px; color: #5e6c84; text-decoration: none; font-size: 0.85rem; margin-top: 0.5rem;">
+                + Añadir Tarea
+            </a>
         </div>
     {% empty %}
-        <p>Este tablero no tiene columnas configuradas. Puedes agregarlas desde el panel de administración.</p>
+        <p>Este tablero no tiene columnas todavía. Haz clic en <strong>"+ Nueva Columna"</strong> para empezar.</p>
     {% endfor %}
 </div>
 {% endblock content %}
